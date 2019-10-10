@@ -1,0 +1,16 @@
+{
+  "name": "bricker",
+  "version": "0.1.0",
+  "description": "Browser Clicker",
+  "main": "bricker.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mark F. Russo PhD",
+  "license": "GPL-3.0-or-later",
+  "bin": "bricker.js",
+  "dependencies": {
+    "express": "^4.17.1",
+    "ws": "^7.1.2"
+  }
+}

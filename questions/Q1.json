@@ -1,0 +1,11 @@
+{
+    "_question": "What will the following code print?",
+    "_options" : {
+        "A"    : 25,
+        "B"    : 26,
+        "C"    : 12345,
+        "D"    : "Nothing",
+        "E"    : ""
+    },
+    "_file"    : "static/sample1.java"
+}

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Question</title>
+        <style>
+            * { font-family: Arial, Helvetica, sans-serif; }
+            pre > code { font-family: "Sans Mono", "Consolas", "Courier", monospace; }
+        </style>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/styles/vs2015.min.css">
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.10/highlight.min.js"></script>
+        <!-- <script type="text/javascript">hljs.initHighlightingOnLoad();</script> -->
+    </head>
+    <body>
+        <pre style="float:left;"><code id="srccode" class="java"></code></pre>
+        <div style="float:left;padding:10px;">
+            <p id="question"></p>
+            <table id="tbl">
+                <!-- <tr><td style="width:25px"><input type="radio" name="question" value="A" onclick="notify_response(event)"></td><td>A.</td></td><td>${A}</td></tr>
+                <tr><td><input type="radio" name="question" value="B" onclick="notify_response(event)"></td><td>B.</td><td>${B}</td></tr>
+                <tr><td><input type="radio" name="question" value="C" onclick="notify_response(event)"></td><td>C.</td><td>${C}</td></tr>
+                <tr><td><input type="radio" name="question" value="D" onclick="notify_response(event)"></td><td>D.</td><td>${D}</td></tr>
+                <tr><td><input type="radio" name="question" value="E" onclick="notify_response(event)"></td><td>E.</td><td>${E}</td></tr> -->
+            </table>
+            <p></p>
+            <fieldset style="width:320px;">
+                <!-- <legend>Countdown Timer</legend> -->
+                <a href="#" onclick="startCountdown()">Start</a> | 
+                <a href="#" onclick="stopCountdown()" >Stop</a> | 
+                <a href="#" onclick="resetCountdown()">Reset</a> | 
+                <span id="sminutes">00</span>:
+                <span id="sseconds">00</span>:
+                <span id="sms">000</span> seconds
+            </fieldset>
+        </div>
+        <script>
+            // Notify the server of the response
+            function notify_response(ev) {
+                let msg = {'cmd':'response', 'data':ev.target.value};
+                // TODO: Trap exception and attempt to reconnect
+                // if (ws.readyState !== WebSocket.OPEN) { 
+                //    try to reopen
+                // }
+                ws.send( JSON.stringify(msg) );
+            }
+
+            // Load the current question context and render page
+            fetch('qcontext')
+            .then(response => response.json())
+            .then( function(ctx) {
+                //console.log(JSON.stringify(ctx));
+
+                // Web socket for persistent connections to server
+                ws = new WebSocket(`ws://${window.location.hostname}:${ctx._wssport}`);
+        
+                // event dispatched when connected
+                ws.onopen = function () {
+                    console.log('websocket is connected ...')
+        
+                    // sending a send event to websocket server
+                    let msg = {"cmd":"connected","data":"question"};
+                    ws.send(JSON.stringify(msg));
+                }
+        
+                // event dispatched when receiving message 
+                ws.onmessage = function (ev) {
+                    console.log(ev.data);
+                    let msg = JSON.parse(ev.data);
+                    if (msg.cmd === 'reload') {
+                        document.location = `${location.protocol}//${location.host}${location.pathname}?${Math.random()}`;
+                    }
+                }
+
+                // Set Question text
+                document.getElementById('question').innerHTML = ctx._question;
+
+                // Build table of options
+                let rows = [];
+                let op = ctx._options;
+                for (let key in op) {
+                    let row = `<tr><td style="width:25px"><input type="radio" name="question" value="${key}" onclick="notify_response(event)"></td><td>A.</td></td><td>${op[key]}</td></tr>`;
+                    rows.push(row);
+                }
+                document.getElementById("tbl").innerHTML = rows.join("");
+
+                // Add source code file, if any. Force highlighting.
+                if (ctx._file) {
+                    document.getElementById('srccode').innerHTML = ctx._file;
+                    document.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightBlock(block);
+                    });
+                }
+            });
+
+            // Countdown timer
+            let offset  = 0;
+            let stopped = true;
+
+            renderTimer();
+            
+            function startCountdown(evt) {
+                if (stopped) {
+                    stopped = false;
+                    offset -= Date.now();
+                    renderTimer();
+                }
+            }
+
+            function stopCountdown(evt) {
+                if (!stopped) {
+                    stopped = true;
+                    offset += Date.now();
+                }
+            }
+
+            function resetCountdown(evt) {
+                if (stopped) {
+                    offset = 0;
+                    renderTimer();
+                } else {
+                    offset = -Date.now();
+                }
+            }
+
+            function format(value, scale, modulo, padding) {
+                value = Math.floor(value / scale) % modulo;
+                return value.toString().padStart(padding, 0);
+            }
+
+            function renderTimer() {
+                var value = stopped ? offset : Date.now() + offset;
+
+                document.querySelector('#sms'     ).textContent = format(value, 1, 1000, 3);
+                document.querySelector('#sseconds').textContent = format(value, 1000, 60, 2);
+                document.querySelector('#sminutes').textContent = format(value, 60000, 60, 2);
+            
+                if(!stopped) {
+                    requestAnimationFrame(renderTimer);
+                }
+            }
+        </script>
+    </body>
+</html>

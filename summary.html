@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Response Summary</title>
+        <style>
+            * { font-family: Arial, Helvetica, sans-serif; }
+            .bar {display:inline-block; vertical-align:middle; background-color:blue; height:25px; }
+        </style>
+    </head>
+    <body>
+        <p id="question"></p>
+        <table id="tbl">
+            <!-- <tr><td>A.</td><td><div class="bar" style="width: calc(20*${A}px);"></div> (${A})</td></tr>
+            <tr><td>B.</td><td><div class="bar" style="width: calc(20*${B}px);"></div> (${B})</td></tr>
+            <tr><td>C.</td><td><div class="bar" style="width: calc(20*${C}px);"></div> (${C})</td></tr>
+            <tr><td>D.</td><td><div class="bar" style="width: calc(20*${D}px);"></div> (${D})</td></tr>
+            <tr><td>E.</td><td><div class="bar" style="width: calc(20*${E}px);"></div> (${E})</td></tr> -->
+        </table>
+        <p>Total responses: <span id="total"></span></p>
+
+        <script type="text/javascript">
+            // Load the current question context and render page
+            fetch('scontext')
+            .then(response => response.json())
+            .then( function(ctx) {
+                //console.log(JSON.stringify(ctx));
+
+                // Web socket for persistent connections to server
+                ws = new WebSocket(`ws://${window.location.hostname}:${ctx._wssport}`);
+
+                // event dispatched when connected
+                ws.onopen = function () {
+                    console.log('websocket is connected ...')
+        
+                    // sending a send event to websocket server
+                    let msg = {"cmd":"connected","data":"summary"};
+                    ws.send(JSON.stringify(msg));
+                }
+        
+                // event dispatched when receiving message 
+                ws.onmessage = function (ev) {
+                    console.log(ev.data);
+                    let msg = JSON.parse(ev.data);
+                    if (msg.cmd === 'reload') {
+                        document.location = `${location.protocol}//${location.host}${location.pathname}?${Math.random()}`;
+                    }
+                }
+
+                // Set Question text and total
+                document.getElementById('question').innerHTML = ctx._question;
+                document.getElementById('total').innerHTML = ctx._total;
+
+                // Build histogram
+                let rows = [];
+                let op = ctx._options;
+                for (let key in op) {
+                    let row = `<tr><td>${key}</td><td><div class="bar" style="width: calc(20*${op[key]}px);"></div> (${op[key]})</td></tr>`;
+                    rows.push(row);
+                }
+                document.getElementById("tbl").innerHTML = rows.join("");
+
+            });
+
+            // Web socket for persistent connections to server
+            // let ws = new WebSocket('ws://' + window.location.hostname + ':${_wssport}');
+
+            // event emmited when connected
+            // ws.onopen = function () {
+            //     console.log('websocket is connected ...')
+    
+            //     // sending a send event to websocket server
+            //     let msg = {"cmd":"connected", "data":"summary"};
+            //     ws.send(JSON.stringify(msg));
+            // }
+    
+            // // event emmited when receiving message 
+            // ws.onmessage = function (ev) {
+            //     console.log(ev.data);
+            //     let msg = JSON.parse(ev.data);
+            //     if (msg.cmd === 'reload') {
+            //         document.location = document.location;
+            //     }
+            // }
+        </script>
+    </body>
+</html>

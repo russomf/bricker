@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Bricker Admin</title>
+        <style>
+            * { font-family:Arial, Helvetica, sans-serif; }
+            body { background-color:lavender}
+            select {width: 270px; height: 175px; }
+            .card {
+                margin: 5px;
+                width: 300px;
+                height: 250px;
+                float: left;
+                border-radius: 10px;
+                background-color: white;
+                box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+                transition: 0.3s;
+            }
+            .card:hover {
+                box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+            }
+            .container {
+                padding: 2px 16px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="container">
+                <h3>Questions</h3>
+                <select id="questions" size="10"></select>
+            </div>
+        </div>
+        <div class="card">
+            <div class="container">
+                <h3>Templates</h3>
+                <select id="templates" size="10"></select>
+            </div>
+        </div>
+        <div class="card">
+            <div class="container">
+                <h3>Question Clients</h3>
+                <select id="question_clients" size="10"></select>
+            </div>
+        </div>
+        <div class="card">
+            <div class="container">
+                <h3>Summary Clients</h3>
+                <select id="summary_clients" size="10"></select>
+            </div>
+        </div>
+        <div class="card">
+            <div class="container">
+                <h3>Server IP addresses</h3>
+                <select id="servers" size="10"></select>
+            </div>
+        </div>
+        <div class="card">
+            <div class="container">
+                <h3>Ports</h3>
+                <table>
+                    <tr><td>HTTP Port:</td><td id="_port"></td></tr>
+                    <tr><td>WSS Port:</td><td id="_wssport"></td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- <div class="card">
+            <div class="container">
+                <p>
+                    <button onclick="setQuestion('questions/Q1.json')">Set Q1</button>
+                    <button onclick="setQuestion('questions/Q2.json')">Set Q2</button>
+                </p>
+            </div>
+        </div> -->
+
+        <script type="text/javascript">
+            // Event handlers
+            document.getElementById("questions").onchange = function(ev) { setQuestion(ev.target.value); };
+            document.getElementById("templates").onchange = function(ev) { setTemplate(ev.target.value); };
+
+            // Load the current question context and render page
+            fetch('acontext')
+            .then(response => response.json())
+            .then( function(ctx) {
+                //console.log(JSON.stringify(ctx));
+
+                // Web socket for persistent connections to server
+                ws = new WebSocket(`ws://${window.location.hostname}:${ctx._wssport}`);
+
+                // event dispatched when connected
+                ws.onopen = function () {
+                    console.log('websocket is connected ...')
+        
+                    // sending a send event to websocket server
+                    let msg = {"cmd":"connected","data":"admin"};
+                    ws.send(JSON.stringify(msg));
+                }
+        
+                // event dispatched when receiving message 
+                ws.onmessage = function (ev) {
+                    console.log(ev.data);
+                    let msg = JSON.parse(ev.data);
+                    if (msg.cmd === 'reload') {
+                        document.location = `${location.protocol}//${location.host}${location.pathname}?${Math.random()}`;
+                    }
+                }
+
+                // Fill page with data
+                document.getElementById('_port'   ).innerHTML = ctx._port;
+                document.getElementById('_wssport').innerHTML = ctx._wssport;
+
+                let items = JSON.parse(ctx.servers).map( item => `${item[0]}: ${item[1]}` );
+                addOptions( 'servers', items );
+
+                items = JSON.parse(ctx.question_clients).map( item => `${item['address']}: ${item['port']} (${item['state']})` );
+                addOptions( 'question_clients', items );
+
+                items = JSON.parse(ctx.summary_clients ).map( item => `${item['address']}: ${item['port']} (${item['state']})` );
+                addOptions( 'summary_clients', items );
+
+                items = JSON.parse(ctx.questions).map( item => `questions/${item}` );
+                addOptions( 'questions', items );
+
+                items = JSON.parse(ctx.templates).map( item => `questions/${item}` );
+                addOptions( 'templates', items );
+
+            });
+
+            function setQuestion(path) {
+                let msg = {cmd:'set_context', data:path};
+                ws.send(JSON.stringify(msg));
+            }
+
+            function setTemplate(path) {
+                let msg = {cmd:'set_template', data:path};
+                ws.send(JSON.stringify(msg));
+            }
+
+            function addOptions(id, items) {
+                let el = document.getElementById(id);
+                for (let item of items) {
+                    let op = document.createElement("option");
+                    op.text = item;
+                    op.value = item;
+                    el.add(op);
+                }
+            }
+        </script>
+    </body>
+</html>

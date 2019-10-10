@@ -1,0 +1,9 @@
+{
+    "_question": "What Is the airspeed velocity of an unladen swallow?",
+    "_options" : {
+        "A"    : "100 m/hour",
+        "B"    : "1000 m/hour",
+        "C"    : "Depends if African or European"
+    },
+    "_file": "static/sample1.java"
+}
