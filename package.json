@@ -10,7 +10,7 @@
   "license": "GPL-3.0-or-later",
   "bin": "bricker.js",
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.18.2",
     "ws": "^7.4.6"
   }
 }
